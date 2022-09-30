@@ -2,7 +2,7 @@
 
 
 # Collected Data 
-    Windows, Mac OS and Linux data are available at the moment. Data is collected from a bunch of sources, including our personal laptops (Windows, MacOS) and from the datasets supplied by Dr. Ricks (mainly Linux). More data will be collected as we go.
+Windows, Mac OS and Linux data are available at the moment. Data is collected from a bunch of sources, including our personal laptops (Windows, MacOS) and from the datasets supplied by Dr. Ricks (mainly Linux). More data will be collected as we go.
 
 # Objective 2: Fingerprinting OS using PCAP files
 
