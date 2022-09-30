@@ -11,6 +11,7 @@ As a first step towards solving objective 2, we have written a short Python scri
 ### Prerequisites:
 
 * [Python](https://www.python.org/downloads/)
+* [PyShark](https://github.com/KimiNewt/pyshark/)
 * PCAP files collected from a known machine
 
 ### Usage: 
