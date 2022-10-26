@@ -32,13 +32,13 @@ def parsePacket(packet):
         if hasattr(packet, 'ip'): #Continue to parse further layers only if IP Layer is found, else return None.
                 parseIPLayer(packet, attributes)
                 if hasattr(packet, 'tcp'):
-                        parseTCPLayer(packet, attributes)
+                        parseTCPPacket(packet, attributes)
                 if hasattr(packet, 'udp'):
-                        parseUDPLayer(packet, attributes)
+                        parseUDPPacket(packet, attributes)
                 if hasattr(packet, 'tls'):
-                        parseTLSLayer(packet, attributes)
-                if hasattr(packet, 'quic'):
-                        parseQUICLayer(packet, attributes)
+                        parseTLSPacket(packet, attributes)
+                if hasattr(packet, 'http'):
+                        parseHTTPPacket(packet, attributes)
                 return attributes
         else:
                 return None
@@ -58,33 +58,44 @@ def parseIPLayer(packet, attributes):
         'IP_FRAG_OFF': packet.ip.frag_offset,
         })
 
-#WIP: Parses the TCP Layer of a TCP packet
-def parseTCPLayer(packet, attributes):
+#WIP: Parses the transport Layer of a TCP packet
+def parseTCPPacket(packet, attributes):
         attributes.update({
                 'PROTOCOL': 'tcp',
                 'SRC_PORT': packet.tcp.srcport,
                 'DST_PORT': packet.tcp.dstport
+                # calculated window size 
+                # window 
         })
 
-#WIP: Parses the UDP Layer of a UDP packet
-def parseUDPLayer(packet, attributes):
+#WIP: Parses the transport Layer of a UDP packet
+def parseUDPPacket(packet, attributes):
         attributes.update({
                 'PROTOCOL': 'udp',
                 'SRC_PORT': packet.udp.srcport,
                 'DST_PORT': packet.udp.dstport
         })
 
-#WIP: Parses the QUIC Layer of a UDP packet if found
-def parseQUICLayer(packet, attributes):
+#WIP: Parses an HTTP Packet 
+def parseHTTPPacket(packet, attributes):
         attributes.update({
-                'SUB_PROTOCOL': 'quic',
+                'SUB_PROTOCOL': 'http',
+                # user agent 
         })
 
-#WIP: Parses the TLS Layer of a packet if found
-def parseTLSLayer(packet, attributes):
+#WIP: Parses a TLS packet
+def parseTLSPacket(packet, attributes):
         attributes.update({
                 'SUB_PROTOCOL': 'tls',
+                # version              'VERSION': packet.tls.version
         })
+                # note: Not sure if below tls.handshake.ciphersuite and tls.handshake.type is correct 
+        if packet.tls.handshake.type ==  1: 
+                attributes.update({
+                        'CIPHER_SUITE': packet.tls.handshake.ciphersuite,
+                        # signature algorithms extension 
+                        # key share extension 
+                })
 
 #Prints parsed packet data to parsed_packets.csv...
 def printToCSV(parsedPackets, outputFileName):
