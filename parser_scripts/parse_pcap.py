@@ -2,15 +2,43 @@ import sys
 import pyshark
 import os
 from csv import DictWriter
+import time
+
+
+#A list of objects where each object is the parsed attributes from each packet
+parsedPackets = []
 
 def main():
 
-        print("Reading from: " + str(sys.argv[1]))
-        #Capture packet objects from a pcapng file
-        capture = pyshark.FileCapture(os.path.join(os.getcwd(), str(sys.argv[1])))
+        path = str(sys.argv[1])
+        if os.path.isfile(path) and path.endswith(".pcapng"):
+                parseFile(path)
 
-        #A list of objects where each object is the parsed attributes from each packet
-        parsedPackets = []
+        elif os.path.isdir(path):
+                parseDirectory(path)
+
+        #Print final list to the csv file name provided as argument
+        printToCSV(parsedPackets, str(sys.argv[3]))
+
+                
+
+def parseDirectory(directory):
+        print("Reading from directory: " + directory)
+        dir = os.fsencode(directory)
+    
+        for file in os.listdir(dir):
+                filename = os.fsdecode(file)
+                if filename.endswith(".pcapng"): 
+                        parseFile(str(directory + "\\" + filename))
+                        time.sleep(5)
+                        continue
+                else:
+                        continue
+
+def parseFile(file):
+        print("Reading from file: " + file)
+        #Capture packet objects from a pcapng file
+        capture = pyshark.FileCapture(os.path.join(os.getcwd(), file))
 
         #Parse each internet-bound packet into an object that has all relevant attributes to OS fingerprinting
         for packet in capture:
@@ -20,12 +48,8 @@ def main():
 
         #Display error message if no internet-bound packets found throughout the dataset
         if len(parsedPackets) == 0:
-                print ("ERROR: No Internet Bound packets found")
-                exit()
-
-        #Print final list to the csv file name provided as argument
-        printToCSV(parsedPackets, str(sys.argv[3]))
-
+                print ("ERROR: No Internet Bound packets found in file")
+                
 #Performs preliminary parsing of the packet
 def parsePacket(packet):   
         attributes = {}
@@ -64,9 +88,18 @@ def parseTCPPacket(packet, attributes):
                 'PROTOCOL': 'tcp',
                 'SRC_PORT': packet.tcp.srcport,
                 'DST_PORT': packet.tcp.dstport,
-                'CALCULATED_WINDOW_SIZE': packet.tcp.window_size_value,
-                'WINDOW_SIZE': packet.tcp.window_size,
+                'TCP_HDR_LEN': packet.tcp.hdr_len,
+                'TCP_FLAGS': packet.tcp.flags_str,
+                'TCP_SEQ': packet.tcp.seq_raw,
+                'TCP_ACK': packet.tcp.ack,
+                'TCP_URP': packet.tcp.urgent_pointer,
+                'TCP_WINDOW_SIZE': packet.tcp.window_size_value,
         })
+
+        if hasattr(packet.tcp, 'options'):
+                attributes.update({
+                'TCP_OPTIONS': packet.tcp.options,
+                })
 
 #WIP: Parses the transport Layer of a UDP packet
 def parseUDPPacket(packet, attributes):
@@ -80,35 +113,34 @@ def parseUDPPacket(packet, attributes):
 def parseHTTPPacket(packet, attributes):
         try: 
                 packet.http.user_agent
-                attributes.update({
-                        'SUB_PROTOCOL': 'http',
-                        'USER_AGENT': packet.http.user_agent
-                })
         except:
-                None
+                return
+        attributes.update({
+                'SUB_PROTOCOL': 'http',
+                'HTTP_USER_AGENT': packet.http.user_agent
+        })
 
 #WIP: Parses a TLS packet
 def parseTLSPacket(packet, attributes):
         try:
                 packet.tls.handshake
-                if "Client Hello" in packet.tls.handshake:
-                        attributes.update({
-                        'SUB_PROTOCOL': 'tls',
-                        'VERSION': packet.tls.record_version,
-                        'HANDSHAKE_VERSION': packet.tls.handshake_extensions_supported_version,
-                        'CIPHER_SUITES': packet.tls.handshake_ciphersuites,
-                        'CIPHER_SUITES': packet.tls.handshake_ciphersuite,
-                        'EXTENSION_SIG_ALGS': packet.tls.handshake_sig_hash_alg,
-                        'EXTENSION_KEY_EXCHANGE': packet.tls.handshake_extensions_key_share_group,
-                        })
         except:
-                None
+                return 
+        if "Client Hello" in packet.tls.handshake:
+                attributes.update({
+                'SUB_PROTOCOL': 'tls',
+                'TLS_VERSION': packet.tls.record_version,
+                'TLS_CIPHER_SUITES': packet.tls.handshake_ciphersuites,
+                'TLS_CIPHER_SUITES': packet.tls.handshake_ciphersuite,
+                'TLS_EXTENSION_SIG_ALGS': packet.tls.handshake_sig_hash_alg,
+                })
 
 #Prints parsed packet data to parsed_packets.csv...
 def printToCSV(parsedPackets, outputFileName):
         print("Printing parsed data to file: " + outputFileName)
-        with open(outputFileName, 'w') as output:
-                        writer = DictWriter(output, fieldnames=parsedPackets[0].keys())
+        common_keys = {k for r in parsedPackets for k in r}
+        with open(outputFileName, 'a') as output:
+                        writer = DictWriter(output, fieldnames=common_keys, restval="N/A")
                         writer.writeheader()
                         writer.writerows(parsedPackets)
         print("COMPLETE!")
