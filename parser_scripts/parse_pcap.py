@@ -63,9 +63,9 @@ def parseTCPPacket(packet, attributes):
         attributes.update({
                 'PROTOCOL': 'tcp',
                 'SRC_PORT': packet.tcp.srcport,
-                'DST_PORT': packet.tcp.dstport
-                # calculated window size 
-                # window 
+                'DST_PORT': packet.tcp.dstport,
+                'CALCULATED_WINDOW_SIZE': packet.tcp.window_size_value,
+                'WINDOW_SIZE': packet.tcp.window_size,
         })
 
 #WIP: Parses the transport Layer of a UDP packet
@@ -78,24 +78,31 @@ def parseUDPPacket(packet, attributes):
 
 #WIP: Parses an HTTP Packet 
 def parseHTTPPacket(packet, attributes):
-        attributes.update({
-                'SUB_PROTOCOL': 'http',
-                # user agent 
-        })
+        try: 
+                packet.http.user_agent
+                attributes.update({
+                        'SUB_PROTOCOL': 'http',
+                        'USER_AGENT': packet.http.user_agent
+                })
+        except:
+                None
 
 #WIP: Parses a TLS packet
 def parseTLSPacket(packet, attributes):
-        attributes.update({
-                'SUB_PROTOCOL': 'tls',
-                # version              'VERSION': packet.tls.version
-        })
-                # note: Not sure if below tls.handshake.ciphersuite and tls.handshake.type is correct 
-        if packet.tls.handshake.type ==  1: 
-                attributes.update({
-                        'CIPHER_SUITE': packet.tls.handshake.ciphersuite,
-                        # signature algorithms extension 
-                        # key share extension 
-                })
+        try:
+                packet.tls.handshake
+                if "Client Hello" in packet.tls.handshake:
+                        attributes.update({
+                        'SUB_PROTOCOL': 'tls',
+                        'VERSION': packet.tls.record_version,
+                        'HANDSHAKE_VERSION': packet.tls.handshake_extensions_supported_version,
+                        'CIPHER_SUITES': packet.tls.handshake_ciphersuites,
+                        'CIPHER_SUITES': packet.tls.handshake_ciphersuite,
+                        'EXTENSION_SIG_ALGS': packet.tls.handshake_sig_hash_alg,
+                        'EXTENSION_KEY_EXCHANGE': packet.tls.handshake_extensions_key_share_group,
+                        })
+        except:
+                None
 
 #Prints parsed packet data to parsed_packets.csv...
 def printToCSV(parsedPackets, outputFileName):
