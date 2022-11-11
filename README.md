@@ -19,15 +19,16 @@ As a first step towards solving objective 2, we have written a short Python scri
 
 `cd UTDesign_2022Fall`
 
-`python parser_scripts/parse_pcap.py {PCAP_FILE} {KNOWN_HOST_DEVICE} {OUTPUT_CSV_FILE}`
+`python parser_scripts/pcap_parser.py {PCAP_FILE} {KNOWN_HOST_DEVICE} {OUTPUT_CSV_FILE} {REQUIRED_PROTOCOL}`
 
 The script takes three arguments:
 * *PCAP_FILE*: path to raw PCAP file to be analyzed
 * *KNOWN_HOST_DEVICE*: Device name of the machine that we *know* the pcap files are taken from
 * *OUTPUT_FILE_CSV*: Path to a csv file where we want the parsed output
+* *REQUIRED_PROTOCOL*: Specific protocols that need to be parsed. Can set to "all" to parse all protocols
 
 Example:
-`python parser_scripts/parse_pcap.py collected_data/windows/vxp_windows-pcapdata.pcapng windows parsed_data/Parsed_vxp_windows.csv`
+`python parser_scripts/pcap_parser.py collected_data/windows/vxp_windows-pcapdata.pcapng windows parsed_data/Parsed_vxp_windows.csv all`
 
 Example output after running the script for the above PCAP file can be found in `parsed_data/Parsed_vxp_windows.csv`
 
