@@ -4,6 +4,7 @@ import os
 from csv import DictWriter
 import time
 
+########### to run: python3 tls_parser.py pcap or pcap directory  OS  csv file
 
 #A list of objects where each object is the parsed attributes from each packet
 parsedPackets = []

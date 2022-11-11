@@ -45,15 +45,15 @@ def parseFile(file):
 
         #Display error message if no internet-bound packets found throughout the dataset
         if len(parsedPackets) == 0:
-                print ("ERROR: No Internet Bound packets found in file")
+                print ("ERROR: No TCP packets found in file")
                 
 #Performs preliminary parsing of the packet
 def parsePacket(packet):   
         attributes = {}
-        windows_ip_list = ["192.168.2.241", "192.168.2.212", "192.168.2.95", "192.168.2.91"]
-        mac_ip_list = ["192.168.2.219"]
+        # windows_ip_list = ["192.168.2.241", "192.168.2.212", "192.168.2.95", "192.168.2.91"]
+        # mac_ip_list = ["192.168.2.219"]
         
-        if hasattr(packet, 'tls') and str(packet.ip.src_host) in mac_ip_list:
+        if hasattr(packet, 'tls'):
             parseTLSPacket(packet, attributes)
             return attributes
         else:
@@ -76,10 +76,12 @@ def parseTLSPacket(packet, attributes):
 def printToCSV(parsedPackets, outputFileName):
         print("Printing parsed data to file: " + outputFileName)
         common_keys = {k for r in parsedPackets for k in r}
-        with open(outputFileName, 'a') as output:
+        output_file = open(outputFileName, 'a')
+        with output_file as output:
                         writer = DictWriter(output, fieldnames=common_keys, restval="N/A")
                         writer.writeheader()
                         writer.writerows(parsedPackets)
+        output_file.close()
         print("COMPLETE!")
 
 
