@@ -8,9 +8,10 @@ def main():
     capture = pyshark.FileCapture(os.path.join(os.getcwd(), 'example_pcap.pcapng'))
     dnsPackets = set()
     for packet in capture:
-        destination_address = packet.ip.dst
-        if destination_address:
-            dnsPackets.add(destination_address)
+        try:
+            dnsPackets.add(packet.dns.qry_name)
+        except:
+            None
 
     # DNS destinations not unique to Operating System
     file = open('/Users/alarikavoora/PycharmProjects/broadwayTechnology/dnsDestinations.txt', 'rb')

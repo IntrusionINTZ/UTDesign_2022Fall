@@ -9,7 +9,6 @@ import time
 parsedPackets = []
 
 def main():
-
         path = str(sys.argv[1])
         if os.path.isfile(path) and path.endswith(".pcapng"):
                 parseFile(path)
@@ -19,8 +18,6 @@ def main():
 
         #Print final list to the csv file name provided as argument
         printToCSV(parsedPackets, str(sys.argv[3]))
-
-                
 
 def parseDirectory(directory):
         print("Reading from directory: " + directory)
@@ -63,6 +60,8 @@ def parsePacket(packet):
                         parseTLSPacket(packet, attributes)
                 if hasattr(packet, 'http'):
                         parseHTTPPacket(packet, attributes)
+                if hasattr(packet, 'dns'):
+                        parseDNSPacket(packet, attributes)
                 return attributes
         else:
                 return None
@@ -115,9 +114,19 @@ def parseHTTPPacket(packet, attributes):
                 packet.http.user_agent
         except:
                 return
+        
+        user_agent = str(packet.http.user_agent)
+
+        if "Macintosh" in user_agent:
+                user_agent = "Mac"
+        if "Windows" in user_agent:
+                user_agent = "Windows"
+        if "Linux" in user_agent:
+                user_agent = "Linux"
+
         attributes.update({
                 'SUB_PROTOCOL': 'http',
-                'HTTP_USER_AGENT': packet.http.user_agent
+                'HTTP_USER_AGENT': user_agent
         })
 
 #WIP: Parses a TLS packet
@@ -133,6 +142,13 @@ def parseTLSPacket(packet, attributes):
                 'TLS_CIPHER_SUITES': packet.tls.handshake_ciphersuites,
                 'TLS_CIPHER_SUITES': packet.tls.handshake_ciphersuite,
                 'TLS_EXTENSION_SIG_ALGS': packet.tls.handshake_sig_hash_alg,
+                })
+
+#WIP: Parses a DNS packet
+def parseDNSPacket(packet, attributes):
+        attributes.update({
+                'SUB_PROTOCOL': 'dns',
+                'QUERY_NAME': packet.dns.qry_name,
                 })
 
 #Prints parsed packet data to parsed_packets.csv...
