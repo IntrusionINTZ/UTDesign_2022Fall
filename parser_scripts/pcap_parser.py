@@ -3,18 +3,25 @@ import pyshark
 import os
 from csv import DictWriter
 import time
+import argparse
 
 
 def main():
 
-        path = str(sys.argv[1])
-        os = str(sys.argv[2])
-        outputFile = str(sys.argv[3])
-        requiredProtocol = str(sys.argv[4])
+        parser = argparse.ArgumentParser()
+        parser.add_argument('-p', '--pcap', metavar="PCAP_PATH", type=str, help = "Path to raw PCAP file to be analyzed", required=True)
+        parser.add_argument('-d', '--os', metavar="OS_NAME", type=str, help = "Device OS name of the machine that we know the pcap files are taken from", required=True)
+        parser.add_argument('-o', '--output', metavar="CSV_OUTPUT_PATH", type=str, help = "Path to a csv file where we want the parsed output",  required=True)
+        parser.add_argument('-s', '--protocol', metavar="PROTOCOL", type=str, help = "Specific protocols that need to be parsed [OPTIONAL]")
 
-        parser = PCAPParser(path, os, outputFile, requiredProtocol)
-        
+        args = parser.parse_args()
 
+        if args.protocol:
+                req_protocol = args.protocol
+        else:
+                req_protocol = all
+
+        parser = PCAPParser(args.pcap, args.os, args.output, req_protocol)
         parser.parse()
         parser.printToCSV()
 
